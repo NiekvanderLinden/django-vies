@@ -33,6 +33,7 @@ def fr_format(v):
 
 
 VIES_OPTIONS = {
+    '': ('', re.compile(r'^$')),
     'AT': ('Austria', re.compile(r'^ATU\d{8}$')),
     'BE': ('Belgium', re.compile(r'^BE0?\d{9}$')),
     'BG': ('Bulgaria', re.compile(r'^BG\d{9,10}$')),
@@ -94,7 +95,7 @@ class VATIN(object):
         return self._verify() if self._validate() else False
 
     def _validate(self):
-        if not re.match(r'^[a-zA-Z]', self.country_code):
+        if not re.match(r'^[a-zA-Z]', self.country_code) and self.country_code != '':
             raise ValueError('%s is not a valid ISO_3166-1 country code.' % (self.country_code))
         elif not self.country_code in MEMBER_COUNTRY_CODES:
             raise ValueError('%s is not a VIES member country.' % (self.country_code))
@@ -109,6 +110,9 @@ class VATIN(object):
     @retry(stop_max_delay=10000)
     def _verify(self):
         try:
+            if self.country_code == '':
+                self.result = True
+                return self.result
             self.result = self.client.service.checkVat(self.country_code, self.number)
             return self.result.valid
         except WebFault:
